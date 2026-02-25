@@ -1,0 +1,11 @@
+lua_55_source/
+lua_vm/
+*.tar.gz
+*.zip
+*.txt
+*.bak
+original_source/
+original.zip
+lgc_original.c
+lua-5.4.6/
+lua-5.4.6.tar.gz
