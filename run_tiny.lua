@@ -1,0 +1,10 @@
+package.cpath = "./luadecrypt_src/?.so;" .. package.cpath
+local luadecrypt = require("luadecrypt")
+local f = io.open("test_tiny.luac", "rb")
+local data = f:read("*all")
+f:close()
+local restored = luadecrypt.restore(data)
+local out = io.open("test_tiny_restored.luac", "wb")
+out:write(restored)
+out:close()
+print("Success")

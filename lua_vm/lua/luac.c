@@ -164,24 +164,6 @@ static int writer(lua_State* L, const void* p, size_t size, void* u)
  return (fwrite(p,size,1,(FILE*)u)!=1) && (size!=0);
 }
 
-typedef struct {
-  char *data;
-  size_t len;
-  size_t cap;
-} MemWriter;
-
-static int mem_writer(lua_State* L, const void* p, size_t size, void* u) {
-  MemWriter *mw = (MemWriter *)u;
-  UNUSED(L);
-  if (mw->len + size > mw->cap) {
-    mw->cap = (mw->len + size) * 2;
-    mw->data = realloc(mw->data, mw->cap);
-  }
-  memcpy(mw->data + mw->len, p, size);
-  mw->len += size;
-  return 0;
-}
-
 static int pmain(lua_State* L)
 {
  int argc=(int)lua_tointeger(L,1);
@@ -196,12 +178,12 @@ static int pmain(lua_State* L)
  }
  f=combine(L,argc);
  if (listing) luaU_print(f,listing>1);
-   if (dumping)
+ if (dumping)
  {
   FILE* D= (output==NULL) ? stdout : fopen(output,"wb");
   if (D==NULL) cannot("open");
   lua_lock(L);
-  luaU_dump(L, f, writer, D, stripping);
+  luaU_dump(L, (Proto *)f, writer, D, stripping);
   lua_unlock(L);
   if (ferror(D)) cannot("write");
   if (fclose(D)) cannot("close");
@@ -405,19 +387,6 @@ static void PrintCode(const Proto* f)
         if (f->obfuscated) next_i = DECRYPT_INST(next_i, pc, f->inst_seed);
         printf("\t; %d",(int)next_i);
     } else printf("\t; %d",c);
-    break;
-   case OP_TERNARY:
-    printf("\t; ");
-    if (ISK(c)) PrintConstant(f,INDEXK(c)); else printf("-");
-    printf(" ");
-    {
-      Instruction next_i = code[pc+1];
-      if (f->obfuscated) next_i = DECRYPT_INST(next_i, pc+1, f->inst_seed);
-      if (GET_REAL_OPCODE(next_i, f) == OP_EXTRAARG) {
-        int b2 = GETARG_Bx(next_i);
-        if (ISK(b2)) PrintConstant(f,INDEXK(b2)); else printf("-");
-      } else printf("?");
-    }
     break;
    case OP_EXTRAARG:
     printf("\t; ");
